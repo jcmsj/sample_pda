@@ -21,18 +21,19 @@ pub struct PushdownAutomata<'a> {
     // PDA definition
     pub input_alphabet: BTreeSet<&'a str>, 
     pub stack_alphabet: BTreeSet<&'a str>,
-    pub start_stack_symbol: char,
+    pub start_stack_symbol: &'a char,
     pub transitions: Vec<(String,Transition)>,
     pub start_state: char,
     pub end_states : BTreeSet<&'a str>,
     // For string checking
-    stack: Vec<char>,
+    stack: Vec<
+    &'a char>,
 }
 
 impl <'a> PushdownAutomata<'a>  {
-    pub fn test(&mut self, input: &str) -> bool {
+    pub fn test(&'a mut self, input: &str) -> bool {
         // TODO: pda validation using the alphabets
-        self.stack = vec![self.start_stack_symbol];
+        self.stack = vec![&self.start_stack_symbol];
         let mut input_deque = input.chars().collect::<VecDeque<char>>();
         let mut state:&String = &self.start_state.to_string();
         let mut built = String::from("");
@@ -41,7 +42,7 @@ impl <'a> PushdownAutomata<'a>  {
                 let matches_state = state == in_state;
                 let matches_input = char == t.input;
                 let epsilon = t.input == 'e';
-                let matches_top = top == t.top;
+                let matches_top = *top == t.top;
                 if matches_state && (matches_input || epsilon) && matches_top {
                     built.push(char);
                     // check if the built string fits as the prefix of the input
@@ -49,7 +50,7 @@ impl <'a> PushdownAutomata<'a>  {
                         built.pop();
                         continue; // try next transition
                     }
-                    for g in t.give.clone() {
+                    for g in &t.give {
                         self.stack.push(g)
                     }
                     state = &t.next_state;
@@ -77,7 +78,7 @@ mod tests {
         return PushdownAutomata {
             input_alphabet: vec!["0", "1", "e"].into_iter().collect(),
             stack_alphabet: vec!["A", "Z"].into_iter().collect(),
-            start_stack_symbol: 'Z',
+            start_stack_symbol: &'Z',
             transitions: vec![
                 // (p,0,Z,p,AZ)
                 (String::from("p"), 
